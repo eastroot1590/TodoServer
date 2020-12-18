@@ -1,5 +1,8 @@
 package com.example.demo;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -26,7 +29,23 @@ public class DemoApplication {
 
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+
+		try {
+			FileInputStream token = new FileInputStream("src/main/resources/firebase/firebase_service_key.json");
+
+			FirebaseOptions options = FirebaseOptions.builder()
+					.setCredentials(GoogleCredentials.fromStream(token))
+					.build();
+
+			FirebaseApp.initializeApp(options);
+
+			SpringApplication.run(DemoApplication.class, args);
+		} catch(FileNotFoundException e) {
+			System.out.print(e);
+		} catch(IOException e) {
+			System.out.print(e);
+		}
+
 	}
 
 

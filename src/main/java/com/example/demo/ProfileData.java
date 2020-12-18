@@ -15,6 +15,6 @@ public class ProfileData {
 
     private String name;
     private String profileImagePath;
-    private String backgroundColor;
-    private Info[] infos;
+    private int tier;
+    private int exp;
 }

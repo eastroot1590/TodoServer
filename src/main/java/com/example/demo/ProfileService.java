@@ -1,5 +1,9 @@
 package com.example.demo;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -18,20 +22,25 @@ public class ProfileService {
     private MongoTemplate mongoTemplate;
 
     @GetMapping("/profile")
-    public ProfileData hello(@RequestParam(value = "name", defaultValue = "world")String name) {
+    public ProfileData responseProfile(@RequestParam(value = "token")String token) {
+        try {
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+            String uid = decodedToken.getUid();
 
-        Query query = new Query(Criteria.where("name").is(name));
+            Query query = new Query(Criteria.where("uid").is(uid));
 
-        ProfileData profile = mongoTemplate.findOne(query, ProfileData.class, "profile");
+            ProfileData profile = mongoTemplate.findOne(query, ProfileData.class, "profile");
 
-        if (profile == null) {
-//			return HttpStatus.NOT_FOUND;
-//			throw new RuntimeException();
-            throw new DataNotFoundException(100);
+            if (profile == null) {
+                throw new DataNotFoundException(100);
+            }
+
+            return profile;
+        } catch(FirebaseAuthException e) {
+           System.out.print(e);
         }
-        return profile;
 
-//		return String.format("Hello %s", name);
+        return null;
     }
 
     @PostMapping("/upload")
