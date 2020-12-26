@@ -4,6 +4,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import io.netty.handler.codec.base64.Base64Decoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -13,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.Base64;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -27,7 +30,8 @@ public class ProfileService {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
             String uid = decodedToken.getUid();
 
-            Query query = new Query(Criteria.where("uid").is(uid));
+//            Query query = new Query(Criteria.where("uid").is(uid));
+            Query query = new Query(Criteria.where("uid").is("007"));
 
             ProfileData profile = mongoTemplate.findOne(query, ProfileData.class, "profile");
 
@@ -67,6 +71,51 @@ public class ProfileService {
         return file.getOriginalFilename();
     }
 
+    @PostMapping("/signup")
+    public String SignUp(@RequestBody SignUpData body) {
+        try {
+            ProfileData data = new ProfileData();
+
+            // custom uid
+            data.setUid("007");
+
+//            String token = body.getToken();
+//            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+//            String uid = decodedToken.getUid();
+//            data.setUid(uid);
+
+            data.setName(body.getName());
+            data.setProfileImagePath(UUID.randomUUID().toString() + ".jpg");
+            data.setExp(0);
+            data.setTier(1);
+
+            var filePath = "D:/profile/" + data.getProfileImagePath();
+            FileOutputStream fileStream = new FileOutputStream(filePath);
+            var profileImage = body.getProfileImage();
+            int cursor = 0;
+
+            while (cursor < profileImage.length) {
+                int buffer = 1024;
+                if (cursor + buffer > profileImage.length) {
+                    buffer = profileImage.length - cursor;
+                }
+
+                fileStream.write(profileImage, cursor, buffer);
+                cursor += buffer;
+            }
+            fileStream.write(profileImage, 0, profileImage.length);
+            fileStream.close();
+
+            mongoTemplate.insert(data, "profile");
+
+            return "success";
+        } catch(Exception e) {
+            System.out.println(e);
+
+            return ("fail");
+        }
+    }
+
     @GetMapping("/profile/{file}")
     public void GetImage(@PathVariable("file")String fileName, HttpServletResponse response) {
         try {
@@ -85,12 +134,12 @@ public class ProfileService {
                 length += temp;
             }
 
-            response.setHeader("Content-Length", Integer.toString(length));
-
+            outStream.close();
+            fileStream.close();
         } catch (FileNotFoundException e) {
-            System.out.print(e);
+            System.out.println(e);
         } catch (IOException e) {
-            System.out.print(e);
+            System.out.println(e);
         }
     }
 }

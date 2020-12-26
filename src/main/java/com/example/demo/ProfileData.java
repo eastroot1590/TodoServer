@@ -13,8 +13,10 @@ public class ProfileData {
     @Id
     private String id;
 
+    private String uid;
     private String name;
     private String profileImagePath;
     private int tier;
     private int exp;
 }
+
